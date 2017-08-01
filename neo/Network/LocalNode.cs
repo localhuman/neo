@@ -17,12 +17,15 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using NLog;
 namespace Neo.Network
 {
     public class LocalNode : IDisposable
     {
-        public static event EventHandler<InventoryReceivingEventArgs> InventoryReceiving;
+
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+		public static event EventHandler<InventoryReceivingEventArgs> InventoryReceiving;
         public static event EventHandler<IInventory> InventoryReceived;
 
         public const uint ProtocolVersion = 0;
@@ -63,6 +66,18 @@ namespace Neo.Network
 
         public LocalNode()
         {
+
+            RegisterTransaction tx = Blockchain.SystemShare;
+            byte[] txcode = tx.GetHashData();
+
+            logger.Debug($"SYSTEMSHARE: {BitConverter.ToString(txcode)}");
+            logger.Debug($"SYSTEMSHARE: {tx.Hash}");
+			logger.Debug($"--- admin: {tx.Admin}");
+            logger.Debug($"--- issue: {tx.Owner}");
+            logger.Debug($"--- tx: {tx.Amount}");
+
+
+
             Random rand = new Random();
             this.Nonce = (uint)rand.Next();
             this.connectThread = new Thread(ConnectToPeersLoop)
@@ -79,6 +94,7 @@ namespace Neo.Network
                 };
             }
             this.UserAgent = string.Format("/NEO:{0}/", GetType().GetTypeInfo().Assembly.GetName().Version.ToString(3));
+            logger.Debug($"USer agent::: {this.UserAgent}");
             Blockchain.PersistCompleted += Blockchain_PersistCompleted;
         }
 
@@ -106,6 +122,7 @@ namespace Neo.Network
 
         private static bool AddTransaction(Transaction tx)
         {
+            logger.Debug($"Trying to add transaction in LocalNode");
             if (Blockchain.Default == null) return false;
             lock (mem_pool)
             {
@@ -395,18 +412,27 @@ namespace Neo.Network
             {
                 if (Blockchain.Default == null) return false;
                 Block block = (Block)inventory;
+                logger.Debug($"Received block inventory {block.Index} :: {block.Hash}");
                 if (Blockchain.Default.ContainsBlock(block.Hash)) return false;
                 if (!Blockchain.Default.AddBlock(block)) return false;
             }
             else if (inventory is Transaction)
             {
-                if (!AddTransaction((Transaction)inventory)) return false;
+                logger.Debug($"Trying to add transaction");
+                if (!AddTransaction((Transaction)inventory)) 
+                {
+                    logger.Debug($"Colud not add transaction in LocalNode line 423");
+					return false;
+
+			    }
             }
             else //if (inventory is Consensus)
             {
                 if (!inventory.Verify()) return false;
             }
+            logger.Debug($"Will relay directly");
             bool relayed = RelayDirectly(inventory);
+            logger.Debug($"Relay directly result: {relayed}");
             InventoryReceived?.Invoke(this, inventory);
             return relayed;
         }

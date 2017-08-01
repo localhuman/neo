@@ -49,6 +49,7 @@ namespace Neo.Network.Payloads
             base.Deserialize(reader);
             TxCount = (int)reader.ReadVarInt(int.MaxValue);
             Hashes = reader.ReadSerializableArray<UInt256>();
+
             Flags = reader.ReadVarBytes();
         }
 

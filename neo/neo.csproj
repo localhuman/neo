@@ -17,6 +17,7 @@
     <RootNamespace>Neo</RootNamespace>
     <Company>The Neo Project</Company>
     <Description>Neo</Description>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard1.6|AnyCPU'">
@@ -31,6 +32,15 @@
       <PackagePath>content</PackagePath>
       <Pack>true</Pack>
     </None>
+    <None Update="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NLog.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="policy.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +53,7 @@
     <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
     <PackageReference Include="System.Security.SecureString" Version="4.0.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.1" />
+    <PackageReference Include="NLog" Version="5.0.0-beta09" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">

@@ -10,12 +10,16 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using NLog;
 
 namespace Neo.Implementations.Blockchains.LevelDB
 {
     public class LevelDBBlockchain : Blockchain
     {
-        private DB db;
+
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+		private DB db;
         private Thread thread_persistence;
         private List<UInt256> header_index = new List<UInt256>();
         private Dictionary<UInt256, Header> header_cache = new Dictionary<UInt256, Header>();
@@ -108,6 +112,8 @@ namespace Neo.Implementations.Blockchains.LevelDB
 
         public override bool AddBlock(Block block)
         {
+//            logger.Debug($"ADDING BLOCK {block.Index} with hash {block.Hash}");
+
             lock (block_cache)
             {
                 if (!block_cache.ContainsKey(block.Hash))

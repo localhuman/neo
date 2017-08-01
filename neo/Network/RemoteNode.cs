@@ -10,11 +10,15 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using NLog;
 
 namespace Neo.Network
 {
     public abstract class RemoteNode : IDisposable
     {
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+		
         public event EventHandler<bool> Disconnected;
         internal event EventHandler<IInventory> InventoryReceived;
         internal event EventHandler<IPEndPoint[]> PeersReceived;
@@ -111,8 +115,13 @@ namespace Neo.Network
         {
             if (!localNode.ServiceEnabled) return;
             if (Blockchain.Default == null) return;
-            UInt256 hash = payload.HashStart.Select(p => Blockchain.Default.GetHeader(p)).Where(p => p != null).OrderBy(p => p.Index).Select(p => p.Hash).FirstOrDefault();
+            UInt256 hash = payload.HashStart.
+                                  Select(p => Blockchain.Default.GetHeader(p)).
+                                  Where(p => p != null).OrderBy(p => p.Index).
+                                  Select(p => p.Hash).FirstOrDefault();
+            
             if (hash == null || hash == payload.HashStop) return;
+
             List<UInt256> hashes = new List<UInt256>();
             do
             {

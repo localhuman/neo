@@ -4,12 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using NLog;
 
 namespace Neo.Core
 {
     public class ClaimTransaction : Transaction
     {
-        public CoinReference[] Claims;
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+		public CoinReference[] Claims;
 
         public override Fixed8 NetworkFee => Fixed8.Zero;
 
@@ -77,6 +80,8 @@ namespace Neo.Core
         /// <returns>返回验证结果</returns>
         public override bool Verify(IEnumerable<Transaction> mempool)
         {
+
+            logger.Debug($"Verify claim transaction start");
             if (!base.Verify(mempool)) return false;
             if (Claims.Length != Claims.Distinct().Count())
                 return false;
@@ -86,16 +91,27 @@ namespace Neo.Core
             if (result == null || result.Amount > Fixed8.Zero) return false;
             try
             {
+                Fixed8 claimamount = Blockchain.CalculateBonus(Claims, false);
+                Fixed8 resultAmount = -result.Amount;
+                logger.Debug($"blockchain sez: {claimamount} network sez: {resultAmount}");                                             
                 return Blockchain.CalculateBonus(Claims, false) == -result.Amount;
             }
-            catch (ArgumentException)
+            catch (ArgumentException e)
             {
+                logger.Debug($"Argument exception: {e.Message}");
                 return false;
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
-                return false;
+				logger.Debug($"Not supported exception: {e.Message}");
+
+				return false;
             }
+            catch (Exception e )
+            {
+				logger.Debug($"Other exception: {e.Message}");
+                return false;
+			}
         }
     }
 }

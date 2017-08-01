@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NLog;
 
 namespace Neo.Network.RPC
 {
@@ -18,7 +19,10 @@ namespace Neo.Network.RPC
         protected readonly LocalNode LocalNode;
         private IWebHost host;
 
-        public RpcServer(LocalNode localNode)
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+
+		public RpcServer(LocalNode localNode)
         {
             this.LocalNode = localNode;
         }
@@ -53,6 +57,8 @@ namespace Neo.Network.RPC
 
         protected virtual JObject Process(string method, JArray _params)
         {
+            logger.Debug($"Processing method {method} with params {_params.ToString()}");
+            
             switch (method)
             {
                 case "getaccountstate":
@@ -182,6 +188,7 @@ namespace Neo.Network.RPC
                 case "sendrawtransaction":
                     {
                         Transaction tx = Transaction.DeserializeFrom(_params[0].AsString().HexToBytes());
+                        logger.Debug($"Received raw tx: {tx.ToJson()}");
                         return LocalNode.Relay(tx);
                     }
                 case "submitblock":

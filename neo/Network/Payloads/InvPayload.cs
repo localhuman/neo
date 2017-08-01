@@ -1,12 +1,15 @@
 ﻿using Neo.IO;
 using System;
 using System.IO;
+using NLog;
 
 namespace Neo.Network.Payloads
 {
     internal class InvPayload : ISerializable
     {
-        public InventoryType Type;
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+		public InventoryType Type;
         public UInt256[] Hashes;
 
         public int Size => sizeof(InventoryType) + Hashes.GetVarSize();
@@ -32,6 +35,6 @@ namespace Neo.Network.Payloads
         {
             writer.Write((byte)Type);
             writer.Write(Hashes);
-        }
+		}
     }
 }

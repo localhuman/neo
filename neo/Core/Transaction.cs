@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using NLog;
 
 namespace Neo.Core
 {
@@ -17,10 +18,13 @@ namespace Neo.Core
     /// </summary>
     public abstract class Transaction : IEquatable<Transaction>, IInventory
     {
-        /// <summary>
-        /// 交易类型
-        /// </summary>
-        public readonly TransactionType Type;
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+
+		/// <summary>
+		/// 交易类型
+		/// </summary>
+		public readonly TransactionType Type;
         /// <summary>
         /// 版本
         /// </summary>
@@ -328,6 +332,8 @@ namespace Neo.Core
         /// <returns>返回验证的结果</returns>
         public virtual bool Verify(IEnumerable<Transaction> mempool)
         {
+
+            logger.Debug($"Base transaction verify ...");
             for (int i = 1; i < Inputs.Length; i++)
                 for (int j = 0; j < i; j++)
                     if (Inputs[i].PrevHash == Inputs[j].PrevHash && Inputs[i].PrevIndex == Inputs[j].PrevIndex)
@@ -335,7 +341,10 @@ namespace Neo.Core
             if (mempool.Where(p => p != this).SelectMany(p => p.Inputs).Intersect(Inputs).Count() > 0)
                 return false;
             if (Blockchain.Default.IsDoubleSpend(this))
+            {
+				logger.Debug($"is double spend");
                 return false;
+			}
             foreach (var group in Outputs.GroupBy(p => p.AssetId))
             {
                 AssetState asset = Blockchain.Default.GetAssetState(group.Key);
@@ -347,6 +356,7 @@ namespace Neo.Core
                         return false;
             }
             TransactionResult[] results = GetTransactionResults()?.ToArray();
+            logger.Debug($"Transaction results? {results.ToString()}");
             if (results == null) return false;
             TransactionResult[] results_destroy = results.Where(p => p.Amount > Fixed8.Zero).ToArray();
             if (results_destroy.Length > 1) return false;

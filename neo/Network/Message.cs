@@ -6,12 +6,15 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NLog;
 
 namespace Neo.Network
 {
     public class Message : ISerializable
     {
-        private const int PayloadMaxSize = 0x02000000;
+		private static Logger logger = LogManager.GetCurrentClassLogger();
+
+		private const int PayloadMaxSize = 0x02000000;
 
         public static readonly uint Magic = Settings.Default.Magic;
         public string Command;
@@ -44,14 +47,17 @@ namespace Neo.Network
             if (length > PayloadMaxSize)
                 throw new FormatException();
             this.Checksum = reader.ReadUInt32();
-            this.Payload = reader.ReadBytes((int)length);
-            if (GetChecksum(Payload) != Checksum)
+
+			this.Payload = reader.ReadBytes((int)length);
+
+			if (GetChecksum(Payload) != Checksum)
                 throw new FormatException();
         }
 
         public static async Task<Message> DeserializeFromAsync(Stream stream, CancellationToken cancellationToken)
         {
-            byte[] buffer = new byte[24];
+
+			byte[] buffer = new byte[24];
             await FillBufferAsync(stream, buffer, cancellationToken);
             Message message = new Message();
             using (MemoryStream ms = new MemoryStream(buffer, false))
@@ -60,22 +66,28 @@ namespace Neo.Network
                 if (reader.ReadUInt32() != Magic)
                     throw new FormatException();
                 message.Command = reader.ReadFixedString(12);
-                uint length = reader.ReadUInt32();
+
+				uint length = reader.ReadUInt32();
                 if (length > PayloadMaxSize)
                     throw new FormatException();
-                message.Checksum = reader.ReadUInt32();
-                message.Payload = new byte[length];
+
+				message.Checksum = reader.ReadUInt32();
+
+				message.Payload = new byte[length];
             }
             if (message.Payload.Length > 0)
                 await FillBufferAsync(stream, message.Payload, cancellationToken);
-            if (GetChecksum(message.Payload) != message.Checksum)
+			
+
+			if (GetChecksum(message.Payload) != message.Checksum)
                 throw new FormatException();
             return message;
         }
 
         public static async Task<Message> DeserializeFromAsync(WebSocket socket, CancellationToken cancellationToken)
         {
-            byte[] buffer = new byte[24];
+
+			byte[] buffer = new byte[24];
             await FillBufferAsync(socket, buffer, cancellationToken);
             Message message = new Message();
             using (MemoryStream ms = new MemoryStream(buffer, false))
@@ -84,15 +96,20 @@ namespace Neo.Network
                 if (reader.ReadUInt32() != Magic)
                     throw new FormatException();
                 message.Command = reader.ReadFixedString(12);
-                uint length = reader.ReadUInt32();
+
+				uint length = reader.ReadUInt32();
                 if (length > PayloadMaxSize)
                     throw new FormatException();
-                message.Checksum = reader.ReadUInt32();
-                message.Payload = new byte[length];
+
+				message.Checksum = reader.ReadUInt32();
+
+				message.Payload = new byte[length];
             }
             if (message.Payload.Length > 0)
                 await FillBufferAsync(socket, message.Payload, cancellationToken);
-            if (GetChecksum(message.Payload) != message.Checksum)
+
+
+			if (GetChecksum(message.Payload) != message.Checksum)
                 throw new FormatException();
             return message;
         }
