@@ -51,4 +51,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\neo-vm\src\neo-vm\neo-vm.csproj" />
+  </ItemGroup>
+
 </Project>
