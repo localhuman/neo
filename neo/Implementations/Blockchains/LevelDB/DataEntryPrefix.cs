@@ -20,4 +20,5 @@
         public const byte SYS_CurrentHeader = 0xc1;
         public const byte SYS_Version = 0xf0;
     }
+
 }
